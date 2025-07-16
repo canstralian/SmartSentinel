@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+
+{% block title %}Alerts - Surveillance System{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="panel-card">
+                <div class="panel-header">
+                    <h5><i data-feather="alert-triangle" class="me-2"></i>Alert Management</h5>
+                    <div class="btn-group">
+                        <button class="btn btn-sm btn-outline-primary" onclick="filterAlerts('all')">All</button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="filterAlerts('active')">Active</button>
+                        <button class="btn btn-sm btn-outline-warning" onclick="filterAlerts('acknowledged')">Acknowledged</button>
+                        <button class="btn btn-sm btn-outline-success" onclick="filterAlerts('resolved')">Resolved</button>
+                    </div>
+                </div>
+                
+                <div class="panel-body">
+                    <div class="alert-filters mb-3">
+                        <div class="row g-2">
+                            <div class="col-md-3">
+                                <select class="form-select" id="severityFilter">
+                                    <option value="">All Severities</option>
+                                    <option value="critical">Critical</option>
+                                    <option value="high">High</option>
+                                    <option value="medium">Medium</option>
+                                    <option value="low">Low</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <select class="form-select" id="typeFilter">
+                                    <option value="">All Types</option>
+                                    <option value="motion">Motion</option>
+                                    <option value="object">Object</option>
+                                    <option value="boundary">Boundary</option>
+                                    <option value="loitering">Loitering</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <input type="date" class="form-control" id="dateFilter" value="{{ today }}">
+                            </div>
+                            <div class="col-md-3">
+                                <button class="btn btn-primary" onclick="applyFilters()">
+                                    <i data-feather="filter" class="me-1"></i>Apply Filters
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="alert-list">
+                        {% for alert in alerts %}
+                        <div class="alert-item-large severity-{{ alert.severity }} status-{{ alert.status }}" data-alert-id="{{ alert.id }}">
+                            <div class="alert-main">
+                                <div class="alert-icon-large">
+                                    <i data-feather="{{ 'alert-triangle' if alert.severity in ['high', 'critical'] else 'info' }}"></i>
+                                </div>
+                                <div class="alert-content-large">
+                                    <div class="alert-header">
+                                        <h6 class="alert-title">{{ alert.alert_type|title }} Alert</h6>
+                                        <span class="alert-time">{{ alert.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</span>
+                                    </div>
+                                    <div class="alert-details">
+                                        <p class="alert-description">{{ alert.description }}</p>
+                                        <div class="alert-meta">
+                                            <span class="alert-camera">
+                                                <i data-feather="video" class="me-1"></i>{{ alert.camera_name }}
+                                            </span>
+                                            <span class="alert-severity">
+                                                <i data-feather="zap" class="me-1"></i>{{ alert.severity|title }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="alert-actions">
+                                    <div class="alert-status-badge">
+                                        <span class="badge bg-{{ 'success' if alert.status == 'resolved' else 'warning' if alert.status == 'acknowledged' else 'danger' }}">
+                                            {{ alert.status|title }}
+                                        </span>
+                                    </div>
+                                    <div class="alert-buttons">
+                                        {% if alert.status == 'active' %}
+                                        <button class="btn btn-sm btn-outline-warning" onclick="acknowledgeAlert({{ alert.id }})">
+                                            <i data-feather="check" class="me-1"></i>Acknowledge
+                                        </button>
+                                        {% endif %}
+                                        <button class="btn btn-sm btn-outline-primary" onclick="viewAlert({{ alert.id }})">
+                                            <i data-feather="eye" class="me-1"></i>View
+                                        </button>
+                                        <div class="btn-group">
+                                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
+                                                <i data-feather="more-horizontal"></i>
+                                            </button>
+                                            <ul class="dropdown-menu">
+                                                <li><a class="dropdown-item" href="#"><i data-feather="camera" class="me-2"></i>View Camera</a></li>
+                                                <li><a class="dropdown-item" href="#"><i data-feather="film" class="me-2"></i>View Recording</a></li>
+                                                <li><a class="dropdown-item" href="#"><i data-feather="download" class="me-2"></i>Export</a></li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% if alert.acknowledged_by %}
+                            <div class="alert-footer">
+                                <small class="text-muted">
+                                    <i data-feather="user" class="me-1"></i>
+                                    Acknowledged by {{ alert.acknowledged_by }}
+                                </small>
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function filterAlerts(status) {
+        const alertItems = document.querySelectorAll('.alert-item-large');
+        alertItems.forEach(item => {
+            if (status === 'all' || item.classList.contains(`status-${status}`)) {
+                item.style.display = 'block';
+            } else {
+                item.style.display = 'none';
+            }
+        });
+    }
+    
+    function acknowledgeAlert(alertId) {
+        if (confirm('Are you sure you want to acknowledge this alert?')) {
+            window.location.href = `/acknowledge_alert/${alertId}`;
+        }
+    }
+    
+    function viewAlert(alertId) {
+        // Mock alert details modal
+        alert(`Viewing alert ${alertId} details`);
+    }
+    
+    function applyFilters() {
+        const severity = document.getElementById('severityFilter').value;
+        const type = document.getElementById('typeFilter').value;
+        const date = document.getElementById('dateFilter').value;
+        
+        // Mock filter application
+        console.log('Applying filters:', { severity, type, date });
+    }
+    
+    // Set today's date
+    document.getElementById('dateFilter').value = new Date().toISOString().split('T')[0];
+</script>
+{% endblock %}

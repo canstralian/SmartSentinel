@@ -1,0 +1,248 @@
+{% extends "base.html" %}
+
+{% block title %}Analytics - Surveillance System{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Analytics Overview -->
+        <div class="col-12 mb-4">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <div class="stat-card bg-primary text-white">
+                        <div class="stat-icon">
+                            <i data-feather="eye"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3>{{ analytics.total_events_today }}</h3>
+                            <p>Events Today</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card bg-success text-white">
+                        <div class="stat-icon">
+                            <i data-feather="users"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3>{{ analytics.object_summary.person }}</h3>
+                            <p>People Detected</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card bg-info text-white">
+                        <div class="stat-icon">
+                            <i data-feather="truck"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3>{{ analytics.object_summary.vehicle }}</h3>
+                            <p>Vehicles Detected</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card bg-warning text-white">
+                        <div class="stat-icon">
+                            <i data-feather="alert-triangle"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3>{{ analytics.total_alerts_today }}</h3>
+                            <p>Alerts Today</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Charts Row -->
+        <div class="col-lg-8">
+            <div class="panel-card">
+                <div class="panel-header">
+                    <h5><i data-feather="trending-up" class="me-2"></i>Activity Trends</h5>
+                </div>
+                <div class="panel-body">
+                    <canvas id="activityChart" width="400" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="panel-card">
+                <div class="panel-header">
+                    <h5><i data-feather="pie-chart" class="me-2"></i>Object Detection</h5>
+                </div>
+                <div class="panel-body">
+                    <canvas id="objectChart" width="400" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Camera Performance -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="panel-card">
+                <div class="panel-header">
+                    <h5><i data-feather="monitor" class="me-2"></i>Camera Performance</h5>
+                </div>
+                <div class="panel-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Camera</th>
+                                    <th>Uptime</th>
+                                    <th>Events Today</th>
+                                    <th>Alerts Today</th>
+                                    <th>Performance</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for camera in analytics.camera_metrics %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <i data-feather="video" class="me-2"></i>
+                                            {{ camera.name }}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{{ 'success' if camera.uptime > 95 else 'warning' if camera.uptime > 85 else 'danger' }}">
+                                            {{ camera.uptime }}%
+                                        </span>
+                                    </td>
+                                    <td>{{ camera.events_today }}</td>
+                                    <td>{{ camera.alerts_today }}</td>
+                                    <td>
+                                        <div class="progress" style="height: 8px;">
+                                            <div class="progress-bar bg-{{ 'success' if camera.uptime > 95 else 'warning' if camera.uptime > 85 else 'danger' }}" 
+                                                 style="width: {{ camera.uptime }}%"></div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Events -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="panel-card">
+                <div class="panel-header">
+                    <h5><i data-feather="activity" class="me-2"></i>Recent Events</h5>
+                </div>
+                <div class="panel-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Timestamp</th>
+                                    <th>Camera</th>
+                                    <th>Event Type</th>
+                                    <th>Confidence</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for event in events[:10] %}
+                                <tr>
+                                    <td>{{ event.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                                    <td>{{ event.camera_name }}</td>
+                                    <td>
+                                        <span class="badge bg-primary">{{ event.event_type|title }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{{ 'success' if event.confidence > 0.8 else 'warning' if event.confidence > 0.6 else 'danger' }}">
+                                            {{ (event.confidence * 100)|round(1) }}%
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-primary" title="View Details">
+                                            <i data-feather="eye"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Activity Chart
+    const activityCtx = document.getElementById('activityChart').getContext('2d');
+    new Chart(activityCtx, {
+        type: 'line',
+        data: {
+            labels: [{% for data in analytics.hourly_data %}'{{ data.timestamp }}'{% if not loop.last %},{% endif %}{% endfor %}],
+            datasets: [{
+                label: 'People',
+                data: [{% for data in analytics.hourly_data %}{{ data.person_count }}{% if not loop.last %},{% endif %}{% endfor %}],
+                borderColor: '#10B981',
+                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                fill: true
+            }, {
+                label: 'Vehicles',
+                data: [{% for data in analytics.hourly_data %}{{ data.vehicle_count }}{% if not loop.last %},{% endif %}{% endfor %}],
+                borderColor: '#3B82F6',
+                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                fill: true
+            }, {
+                label: 'Alerts',
+                data: [{% for data in analytics.hourly_data %}{{ data.alerts }}{% if not loop.last %},{% endif %}{% endfor %}],
+                borderColor: '#EF4444',
+                backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                title: {
+                    display: true,
+                    text: '24 Hour Activity Trend'
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+    
+    // Object Detection Chart
+    const objectCtx = document.getElementById('objectChart').getContext('2d');
+    new Chart(objectCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['People', 'Vehicles', 'Bicycles', 'Other'],
+            datasets: [{
+                data: [{{ analytics.object_summary.person }}, {{ analytics.object_summary.vehicle }}, {{ analytics.object_summary.bicycle }}, {{ analytics.object_summary.other }}],
+                backgroundColor: ['#10B981', '#3B82F6', '#F59E0B', '#6B7280']
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Object Detection Summary (24h)'
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,288 @@
+{% extends "base.html" %}
+
+{% block title %}Forensic Search - Surveillance System{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="panel-card">
+                <div class="panel-header">
+                    <h5><i data-feather="search" class="me-2"></i>Forensic Search</h5>
+                    <button class="btn btn-sm btn-primary" onclick="performSearch()">
+                        <i data-feather="search" class="me-1"></i>Search
+                    </button>
+                </div>
+                
+                <div class="panel-body">
+                    <!-- Search Filters -->
+                    <div class="search-filters mb-4">
+                        <div class="row g-3">
+                            <div class="col-md-3">
+                                <label class="form-label">Date Range</label>
+                                <div class="input-group">
+                                    <input type="datetime-local" class="form-control" id="startDate">
+                                    <span class="input-group-text">to</span>
+                                    <input type="datetime-local" class="form-control" id="endDate">
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">Camera</label>
+                                <select class="form-select" id="cameraFilter">
+                                    <option value="">All Cameras</option>
+                                    {% for camera in cameras %}
+                                    <option value="{{ camera.id }}">{{ camera.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">Object Type</label>
+                                <select class="form-select" id="objectFilter">
+                                    <option value="">All Objects</option>
+                                    <option value="person">Person</option>
+                                    <option value="vehicle">Vehicle</option>
+                                    <option value="bicycle">Bicycle</option>
+                                    <option value="object">Object</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">Confidence</label>
+                                <select class="form-select" id="confidenceFilter">
+                                    <option value="0">Any Confidence</option>
+                                    <option value="0.9">90%+ High</option>
+                                    <option value="0.8">80%+ Medium</option>
+                                    <option value="0.6">60%+ Low</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Search Keywords</label>
+                                <input type="text" class="form-control" id="keywords" placeholder="Enter keywords...">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Search Results -->
+                    <div class="search-results">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6><i data-feather="list" class="me-2"></i>Search Results ({{ events|length }} events found)</h6>
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-outline-primary" onclick="exportResults()">
+                                    <i data-feather="download" class="me-1"></i>Export
+                                </button>
+                                <button class="btn btn-outline-secondary" onclick="createClip()">
+                                    <i data-feather="film" class="me-1"></i>Create Clip
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>
+                                            <input type="checkbox" class="form-check-input" id="selectAll" onchange="toggleSelectAll()">
+                                        </th>
+                                        <th>Timestamp</th>
+                                        <th>Camera</th>
+                                        <th>Object Type</th>
+                                        <th>Confidence</th>
+                                        <th>Thumbnail</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for event in events %}
+                                    <tr>
+                                        <td>
+                                            <input type="checkbox" class="form-check-input event-checkbox" value="{{ event.id }}">
+                                        </td>
+                                        <td>{{ event.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <i data-feather="video" class="me-2"></i>
+                                                {{ event.camera_name }}
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-primary">{{ event.event_type|title }}</span>
+                                        </td>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="progress me-2" style="width: 60px; height: 8px;">
+                                                    <div class="progress-bar bg-{{ 'success' if event.confidence > 0.8 else 'warning' if event.confidence > 0.6 else 'danger' }}" 
+                                                         style="width: {{ (event.confidence * 100)|round }}%"></div>
+                                                </div>
+                                                <span class="text-muted">{{ (event.confidence * 100)|round(1) }}%</span>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="thumbnail-placeholder">
+                                                <i data-feather="image" class="thumbnail-icon"></i>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm">
+                                                <button class="btn btn-outline-primary" onclick="viewEvent({{ event.id }})" title="View Details">
+                                                    <i data-feather="eye"></i>
+                                                </button>
+                                                <button class="btn btn-outline-secondary" onclick="playback({{ event.id }})" title="Playback">
+                                                    <i data-feather="play"></i>
+                                                </button>
+                                                <button class="btn btn-outline-info" onclick="exportEvent({{ event.id }})" title="Export">
+                                                    <i data-feather="download"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <!-- Pagination -->
+                        <nav aria-label="Search results pagination">
+                            <ul class="pagination justify-content-center">
+                                <li class="page-item disabled">
+                                    <a class="page-link" href="#" tabindex="-1">Previous</a>
+                                </li>
+                                <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                                <li class="page-item"><a class="page-link" href="#">2</a></li>
+                                <li class="page-item"><a class="page-link" href="#">3</a></li>
+                                <li class="page-item">
+                                    <a class="page-link" href="#">Next</a>
+                                </li>
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Event Details Modal -->
+<div class="modal fade" id="eventModal" tabindex="-1" aria-labelledby="eventModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="eventModalLabel">Event Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="event-thumbnail-large">
+                            <i data-feather="image" class="thumbnail-icon-large"></i>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <dl class="row">
+                            <dt class="col-sm-4">Timestamp:</dt>
+                            <dd class="col-sm-8" id="eventTimestamp">-</dd>
+                            
+                            <dt class="col-sm-4">Camera:</dt>
+                            <dd class="col-sm-8" id="eventCamera">-</dd>
+                            
+                            <dt class="col-sm-4">Object Type:</dt>
+                            <dd class="col-sm-8" id="eventType">-</dd>
+                            
+                            <dt class="col-sm-4">Confidence:</dt>
+                            <dd class="col-sm-8" id="eventConfidence">-</dd>
+                            
+                            <dt class="col-sm-4">Bounding Box:</dt>
+                            <dd class="col-sm-8" id="eventBoundingBox">-</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="playbackFromModal()">
+                    <i data-feather="play" class="me-1"></i>Playback
+                </button>
+                <button type="button" class="btn btn-outline-primary" onclick="exportFromModal()">
+                    <i data-feather="download" class="me-1"></i>Export
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Set default date range (last 24 hours)
+    const now = new Date();
+    const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    
+    document.getElementById('startDate').value = yesterday.toISOString().slice(0, 16);
+    document.getElementById('endDate').value = now.toISOString().slice(0, 16);
+    
+    function performSearch() {
+        const startDate = document.getElementById('startDate').value;
+        const endDate = document.getElementById('endDate').value;
+        const camera = document.getElementById('cameraFilter').value;
+        const objectType = document.getElementById('objectFilter').value;
+        const confidence = document.getElementById('confidenceFilter').value;
+        const keywords = document.getElementById('keywords').value;
+        
+        console.log('Performing search with filters:', {
+            startDate, endDate, camera, objectType, confidence, keywords
+        });
+        
+        // Mock search - in reality, this would make an API call
+        alert('Search performed with current filters');
+    }
+    
+    function toggleSelectAll() {
+        const selectAll = document.getElementById('selectAll');
+        const checkboxes = document.querySelectorAll('.event-checkbox');
+        
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = selectAll.checked;
+        });
+    }
+    
+    function viewEvent(eventId) {
+        // Mock event details - in reality, this would fetch from API
+        const modal = new bootstrap.Modal(document.getElementById('eventModal'));
+        document.getElementById('eventTimestamp').textContent = new Date().toLocaleString();
+        document.getElementById('eventCamera').textContent = 'Camera 1';
+        document.getElementById('eventType').textContent = 'Person';
+        document.getElementById('eventConfidence').textContent = '85%';
+        document.getElementById('eventBoundingBox').textContent = '[150, 200, 300, 400]';
+        
+        modal.show();
+    }
+    
+    function playback(eventId) {
+        alert(`Playing back event ${eventId}`);
+    }
+    
+    function exportEvent(eventId) {
+        alert(`Exporting event ${eventId}`);
+    }
+    
+    function exportResults() {
+        const selectedEvents = document.querySelectorAll('.event-checkbox:checked');
+        alert(`Exporting ${selectedEvents.length} selected events`);
+    }
+    
+    function createClip() {
+        const selectedEvents = document.querySelectorAll('.event-checkbox:checked');
+        if (selectedEvents.length === 0) {
+            alert('Please select events to create a clip');
+            return;
+        }
+        alert(`Creating clip from ${selectedEvents.length} selected events`);
+    }
+    
+    function playbackFromModal() {
+        alert('Starting playback from modal');
+    }
+    
+    function exportFromModal() {
+        alert('Exporting event from modal');
+    }
+</script>
+{% endblock %}

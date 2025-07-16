@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block title %}Login - Surveillance System{% endblock %}
+
+{% block content %}
+<div class="login-container">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-6 col-lg-4">
+                <div class="card shadow-lg">
+                    <div class="card-body p-5">
+                        <div class="text-center mb-4">
+                            <i data-feather="shield" class="login-icon text-primary mb-3"></i>
+                            <h2 class="fw-bold text-primary">SecureVision</h2>
+                            <p class="text-muted">Surveillance Management System</p>
+                        </div>
+                        
+                        <form method="POST">
+                            <div class="mb-3">
+                                <label for="username" class="form-label">Username</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light">
+                                        <i data-feather="user"></i>
+                                    </span>
+                                    <input type="text" class="form-control" id="username" name="username" required>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <label for="password" class="form-label">Password</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light">
+                                        <i data-feather="lock"></i>
+                                    </span>
+                                    <input type="password" class="form-control" id="password" name="password" required>
+                                </div>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-primary w-100 mb-3">
+                                <i data-feather="log-in" class="me-2"></i>Sign In
+                            </button>
+                        </form>
+                        
+                        <div class="text-center">
+                            <small class="text-muted">
+                                Default credentials: admin / admin123
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

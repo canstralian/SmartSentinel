@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Surveillance System{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Statistics Cards -->
+        <div class="col-12 mb-4">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <div class="stat-card bg-primary text-white">
+                        <div class="stat-icon">
+                            <i data-feather="video"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3>{{ stats.total_cameras }}</h3>
+                            <p>Total Cameras</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card bg-success text-white">
+                        <div class="stat-icon">
+                            <i data-feather="check-circle"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3>{{ stats.online_cameras }}</h3>
+                            <p>Online Cameras</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card bg-danger text-white">
+                        <div class="stat-icon">
+                            <i data-feather="alert-triangle"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3>{{ stats.active_alerts }}</h3>
+                            <p>Active Alerts</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card bg-info text-white">
+                        <div class="stat-icon">
+                            <i data-feather="activity"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3>{{ stats.system_health }}%</h3>
+                            <p>System Health</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Camera Grid -->
+        <div class="col-lg-8">
+            <div class="panel-card">
+                <div class="panel-header">
+                    <h5><i data-feather="video" class="me-2"></i>Live Camera Feeds</h5>
+                    <a href="{{ url_for('cameras') }}" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+                <div class="panel-body">
+                    <div class="row g-3">
+                        {% for camera in cameras %}
+                        <div class="col-md-6 col-lg-4">
+                            <div class="camera-feed">
+                                <div class="camera-header">
+                                    <span class="camera-name">{{ camera.name }}</span>
+                                    <span class="camera-status status-{{ camera.status }}">
+                                        <i data-feather="circle" class="status-icon"></i>
+                                        {{ camera.status|title }}
+                                    </span>
+                                </div>
+                                <div class="camera-video">
+                                    <div class="video-placeholder">
+                                        <i data-feather="video" class="video-icon"></i>
+                                        <p>{{ camera.location }}</p>
+                                        {% if camera.status == 'online' %}
+                                        <div class="video-controls">
+                                            <button class="btn btn-sm btn-dark">
+                                                <i data-feather="play"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-dark">
+                                                <i data-feather="maximize"></i>
+                                            </button>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Alerts Panel -->
+        <div class="col-lg-4">
+            <div class="panel-card">
+                <div class="panel-header">
+                    <h5><i data-feather="alert-triangle" class="me-2"></i>Recent Alerts</h5>
+                    <a href="{{ url_for('alerts') }}" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+                <div class="panel-body">
+                    <div class="alert-list">
+                        {% for alert in alerts %}
+                        <div class="alert-item severity-{{ alert.severity }}">
+                            <div class="alert-icon">
+                                <i data-feather="alert-circle"></i>
+                            </div>
+                            <div class="alert-content">
+                                <div class="alert-title">{{ alert.alert_type|title }} Detection</div>
+                                <div class="alert-location">{{ alert.camera_name }}</div>
+                                <div class="alert-time">{{ alert.created_at.strftime('%H:%M') }}</div>
+                            </div>
+                            <div class="alert-status">
+                                <span class="badge bg-{{ 'success' if alert.status == 'resolved' else 'warning' if alert.status == 'acknowledged' else 'danger' }}">
+                                    {{ alert.status|title }}
+                                </span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Analytics Section (for IT/Executive roles) -->
+    {% if user_role in ['it', 'executive'] %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="panel-card">
+                <div class="panel-header">
+                    <h5><i data-feather="bar-chart-2" class="me-2"></i>Analytics Overview</h5>
+                    <a href="{{ url_for('analytics') }}" class="btn btn-sm btn-outline-primary">Detailed View</a>
+                </div>
+                <div class="panel-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <canvas id="objectChart" width="400" height="200"></canvas>
+                        </div>
+                        <div class="col-md-6">
+                            <canvas id="activityChart" width="400" height="200"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+{% if user_role in ['it', 'executive'] %}
+<script>
+    // Object Detection Chart
+    const objectCtx = document.getElementById('objectChart').getContext('2d');
+    new Chart(objectCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Person', 'Vehicle', 'Other'],
+            datasets: [{
+                data: [{{ analytics.object_summary.person }}, {{ analytics.object_summary.vehicle }}, {{ analytics.object_summary.other }}],
+                backgroundColor: ['#10B981', '#3B82F6', '#6B7280']
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Object Detection (24h)'
+                }
+            }
+        }
+    });
+    
+    // Activity Chart
+    const activityCtx = document.getElementById('activityChart').getContext('2d');
+    new Chart(activityCtx, {
+        type: 'line',
+        data: {
+            labels: [{% for data in analytics.hourly_data[-12:] %}'{{ data.timestamp }}'{% if not loop.last %},{% endif %}{% endfor %}],
+            datasets: [{
+                label: 'Detections',
+                data: [{% for data in analytics.hourly_data[-12:] %}{{ data.person_count + data.vehicle_count }}{% if not loop.last %},{% endif %}{% endfor %}],
+                borderColor: '#1E3A8A',
+                backgroundColor: 'rgba(30, 58, 138, 0.1)'
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Activity Trend (12h)'
+                }
+            }
+        }
+    });
+</script>
+{% endif %}
+{% endblock %}

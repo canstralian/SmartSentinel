@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+
+{% block title %}Cameras - Surveillance System{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="panel-card">
+                <div class="panel-header">
+                    <h5><i data-feather="video" class="me-2"></i>Camera Management</h5>
+                    <div class="btn-group">
+                        <button class="btn btn-sm btn-outline-primary" onclick="toggleView('grid')">
+                            <i data-feather="grid"></i> Grid
+                        </button>
+                        <button class="btn btn-sm btn-outline-primary" onclick="toggleView('list')">
+                            <i data-feather="list"></i> List
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="panel-body">
+                    <!-- Grid View -->
+                    <div id="grid-view" class="camera-grid">
+                        <div class="row g-3">
+                            {% for camera in cameras %}
+                            <div class="col-md-6 col-lg-4">
+                                <div class="camera-card">
+                                    <div class="camera-header">
+                                        <div class="camera-info">
+                                            <h6>{{ camera.name }}</h6>
+                                            <small class="text-muted">{{ camera.location }}</small>
+                                        </div>
+                                        <div class="camera-status status-{{ camera.status }}">
+                                            <i data-feather="circle" class="status-icon"></i>
+                                            {{ camera.status|title }}
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="camera-video">
+                                        <div class="video-placeholder">
+                                            <i data-feather="video" class="video-icon"></i>
+                                            {% if camera.status == 'online' %}
+                                            <div class="video-controls">
+                                                <button class="btn btn-sm btn-dark">
+                                                    <i data-feather="play"></i>
+                                                </button>
+                                                <button class="btn btn-sm btn-dark">
+                                                    <i data-feather="maximize"></i>
+                                                </button>
+                                                <button class="btn btn-sm btn-dark">
+                                                    <i data-feather="settings"></i>
+                                                </button>
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="camera-footer">
+                                        <small class="text-muted">
+                                            <i data-feather="wifi" class="me-1"></i>{{ camera.ip_address }}
+                                        </small>
+                                        <small class="text-muted">
+                                            <i data-feather="clock" class="me-1"></i>{{ camera.last_activity.strftime('%H:%M') }}
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <!-- List View -->
+                    <div id="list-view" class="camera-list d-none">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Camera</th>
+                                        <th>Location</th>
+                                        <th>IP Address</th>
+                                        <th>Status</th>
+                                        <th>Last Activity</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for camera in cameras %}
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <i data-feather="video" class="me-2"></i>
+                                                <strong>{{ camera.name }}</strong>
+                                            </div>
+                                        </td>
+                                        <td>{{ camera.location }}</td>
+                                        <td>{{ camera.ip_address }}</td>
+                                        <td>
+                                            <span class="badge bg-{{ 'success' if camera.status == 'online' else 'warning' if camera.status == 'maintenance' else 'danger' }}">
+                                                {{ camera.status|title }}
+                                            </span>
+                                        </td>
+                                        <td>{{ camera.last_activity.strftime('%Y-%m-%d %H:%M') }}</td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm">
+                                                <button class="btn btn-outline-primary" title="View">
+                                                    <i data-feather="eye"></i>
+                                                </button>
+                                                <button class="btn btn-outline-secondary" title="Settings">
+                                                    <i data-feather="settings"></i>
+                                                </button>
+                                                <button class="btn btn-outline-info" title="Recordings">
+                                                    <i data-feather="film"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function toggleView(view) {
+        const gridView = document.getElementById('grid-view');
+        const listView = document.getElementById('list-view');
+        
+        if (view === 'grid') {
+            gridView.classList.remove('d-none');
+            listView.classList.add('d-none');
+        } else {
+            gridView.classList.add('d-none');
+            listView.classList.remove('d-none');
+        }
+    }
+</script>
+{% endblock %}

@@ -42,6 +42,7 @@ with app.app_context():
     
     if not User.query.filter_by(username='admin').first():
         admin_user = User(
+            id='admin_legacy',
             username='admin',
             email='admin@surveillance.com',
             password_hash=generate_password_hash('admin123'),

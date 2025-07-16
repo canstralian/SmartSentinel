@@ -1,15 +1,37 @@
 from app import db
 from flask_login import UserMixin
 from datetime import datetime
+from flask_dance.consumer.storage.sqla import OAuthConsumerMixin
+from sqlalchemy import UniqueConstraint
 
 class User(UserMixin, db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(64), unique=True, nullable=False)
-    email = db.Column(db.String(120), unique=True, nullable=False)
-    password_hash = db.Column(db.String(256))
+    __tablename__ = 'users'
+    id = db.Column(db.String, primary_key=True)
+    email = db.Column(db.String, unique=True, nullable=True)
+    first_name = db.Column(db.String, nullable=True)
+    last_name = db.Column(db.String, nullable=True)
+    profile_image_url = db.Column(db.String, nullable=True)
+    
+    # Legacy fields for backwards compatibility
+    username = db.Column(db.String(64), unique=True, nullable=True)
+    password_hash = db.Column(db.String(256), nullable=True)
     role = db.Column(db.String(32), default='operations')  # operations, it, executive
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    created_at = db.Column(db.DateTime, default=datetime.now)
+    updated_at = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
     last_login = db.Column(db.DateTime)
+
+class OAuth(OAuthConsumerMixin, db.Model):
+    user_id = db.Column(db.String, db.ForeignKey(User.id))
+    browser_session_key = db.Column(db.String, nullable=False)
+    user = db.relationship(User)
+
+    __table_args__ = (UniqueConstraint(
+        'user_id',
+        'browser_session_key',
+        'provider',
+        name='uq_user_browser_session_key_provider',
+    ),)
 
 class Camera(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -28,7 +50,7 @@ class Alert(db.Model):
     description = db.Column(db.Text)
     status = db.Column(db.String(20), default='active')  # active, acknowledged, resolved
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    acknowledged_by = db.Column(db.Integer, db.ForeignKey('user.id'))
+    acknowledged_by = db.Column(db.String, db.ForeignKey('users.id'))
     
     camera = db.relationship('Camera', backref='alerts')
     acknowledger = db.relationship('User', backref='acknowledged_alerts')

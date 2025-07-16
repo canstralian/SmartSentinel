@@ -1,0 +1,327 @@
+
+{% extends "base.html" %}
+
+{% block title %}AI Dashboard - SecureVision{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- AI Status Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="panel-card">
+                <div class="panel-header">
+                    <h4><i data-feather="cpu" class="me-2"></i>AI Security Enhancement Status</h4>
+                </div>
+                <div class="panel-content">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="ai-status-card">
+                                <div class="ai-status-icon">
+                                    <i data-feather="{% if ai_status.anthropic %}check-circle{% else %}x-circle{% endif %}" 
+                                       class="text-{% if ai_status.anthropic %}success{% else %}danger{% endif %}"></i>
+                                </div>
+                                <div class="ai-status-info">
+                                    <h6>Claude AI</h6>
+                                    <span class="badge bg-{% if ai_status.anthropic %}success{% else %}danger{% endif %}">
+                                        {% if ai_status.anthropic %}Active{% else %}Offline{% endif %}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="ai-status-card">
+                                <div class="ai-status-icon">
+                                    <i data-feather="{% if ai_status.google_ai %}check-circle{% else %}x-circle{% endif %}" 
+                                       class="text-{% if ai_status.google_ai %}success{% else %}danger{% endif %}"></i>
+                                </div>
+                                <div class="ai-status-info">
+                                    <h6>Gemini Vision</h6>
+                                    <span class="badge bg-{% if ai_status.google_ai %}success{% else %}danger{% endif %}">
+                                        {% if ai_status.google_ai %}Active{% else %}Offline{% endif %}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="ai-status-card">
+                                <div class="ai-status-icon">
+                                    <i data-feather="shield" class="text-primary"></i>
+                                </div>
+                                <div class="ai-status-info">
+                                    <h6>Enhanced Alerts</h6>
+                                    <span class="badge bg-primary">{{ total_enhanced }} Active</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Controls -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="panel-card">
+                <div class="panel-header">
+                    <h5><i data-feather="image" class="me-2"></i>Image Analysis</h5>
+                </div>
+                <div class="panel-content">
+                    <form id="imageAnalysisForm" enctype="multipart/form-data">
+                        <div class="mb-3">
+                            <label for="cameraSelect" class="form-label">Camera Source</label>
+                            <select class="form-select" id="cameraSelect" name="camera_name">
+                                <option value="Camera 1">Camera 1 - Main Entrance</option>
+                                <option value="Camera 2">Camera 2 - Parking Lot</option>
+                                <option value="Camera 3">Camera 3 - Rear Exit</option>
+                                <option value="Camera 4">Camera 4 - Office Area</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="imageFile" class="form-label">Upload Security Image</label>
+                            <input type="file" class="form-control" id="imageFile" name="image" accept="image/*" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary" {% if not ai_status.google_ai %}disabled{% endif %}>
+                            <i data-feather="analyze" class="me-2"></i>Analyze Image
+                        </button>
+                    </form>
+                    <div id="analysisResults" class="mt-3" style="display: none;"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="panel-card">
+                <div class="panel-header">
+                    <h5><i data-feather="file-text" class="me-2"></i>Security Reports</h5>
+                </div>
+                <div class="panel-content">
+                    <div class="mb-3">
+                        <label for="reportPeriod" class="form-label">Report Period</label>
+                        <select class="form-select" id="reportPeriod">
+                            <option value="last_24_hours">Last 24 Hours</option>
+                            <option value="last_week">Last Week</option>
+                            <option value="last_month">Last Month</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-success" id="generateReport" {% if not ai_status.anthropic %}disabled{% endif %}>
+                        <i data-feather="file-plus" class="me-2"></i>Generate AI Report
+                    </button>
+                    <div id="reportResults" class="mt-3" style="display: none;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI-Enhanced Alerts -->
+    <div class="row">
+        <div class="col-12">
+            <div class="panel-card">
+                <div class="panel-header">
+                    <h5><i data-feather="alert-triangle" class="me-2"></i>AI-Enhanced Security Alerts</h5>
+                    <button class="btn btn-sm btn-outline-primary" id="refreshAlerts">
+                        <i data-feather="refresh-cw" class="me-1"></i>Refresh
+                    </button>
+                </div>
+                <div class="panel-content">
+                    {% if ai_alerts %}
+                    <div class="alert-list">
+                        {% for alert in ai_alerts %}
+                        <div class="ai-alert-card" data-severity="{{ alert.severity }}">
+                            <div class="ai-alert-header">
+                                <div class="ai-alert-type">
+                                    <i data-feather="cpu" class="text-primary me-2"></i>
+                                    <strong>{{ alert.alert_type|title }} Detection</strong>
+                                    <span class="badge bg-primary ms-2">AI Enhanced</span>
+                                </div>
+                                <div class="ai-alert-confidence">
+                                    Confidence: {{ (alert.confidence * 100)|round(1) }}%
+                                </div>
+                            </div>
+                            <div class="ai-alert-content">
+                                <p class="ai-alert-description">{{ alert.description }}</p>
+                                {% if alert.threat_analysis %}
+                                <div class="threat-analysis mt-2">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <small class="text-muted">Risk Level:</small>
+                                            <span class="badge bg-{% if alert.threat_analysis.risk_level == 'critical' %}danger{% elif alert.threat_analysis.risk_level == 'high' %}warning{% else %}info{% endif %}">
+                                                {{ alert.threat_analysis.risk_level|title }}
+                                            </span>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <small class="text-muted">Camera:</small> {{ alert.camera_name }}
+                                        </div>
+                                    </div>
+                                    <div class="mt-2">
+                                        <small class="text-muted">Recommended Action:</small>
+                                        <br><small>{{ alert.threat_analysis.recommended_action }}</small>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+                            <div class="ai-alert-actions">
+                                <button class="btn btn-sm btn-outline-primary enhance-btn" data-alert-id="{{ alert.id }}">
+                                    <i data-feather="zap" class="me-1"></i>Enhance
+                                </button>
+                                <button class="btn btn-sm btn-success" onclick="acknowledgeAlert({{ alert.id }})">
+                                    <i data-feather="check" class="me-1"></i>Acknowledge
+                                </button>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i data-feather="info" class="text-muted mb-2" style="width: 48px; height: 48px;"></i>
+                        <p class="text-muted">No AI-enhanced alerts available</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.ai-status-card {
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    background: #f8f9fa;
+}
+
+.ai-status-icon {
+    margin-right: 1rem;
+}
+
+.ai-alert-card {
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    background: #fff;
+}
+
+.ai-alert-header {
+    display: flex;
+    justify-content: between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.ai-alert-type {
+    display: flex;
+    align-items: center;
+}
+
+.ai-alert-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.threat-analysis {
+    background: #f8f9fa;
+    padding: 0.75rem;
+    border-radius: 4px;
+    border-left: 3px solid #007bff;
+}
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Image Analysis
+document.getElementById('imageAnalysisForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const resultsDiv = document.getElementById('analysisResults');
+    
+    try {
+        resultsDiv.innerHTML = '<div class="spinner-border text-primary" role="status"></div> Analyzing image...';
+        resultsDiv.style.display = 'block';
+        
+        const response = await fetch('/api/ai/analyze_image', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            resultsDiv.innerHTML = `
+                <div class="alert alert-success">
+                    <h6>Analysis Complete</h6>
+                    <p><strong>Threat Level:</strong> ${data.analysis.threat_level}</p>
+                    <p><strong>Confidence:</strong> ${(data.analysis.confidence * 100).toFixed(1)}%</p>
+                    <p><strong>Description:</strong> ${data.analysis.threat_description}</p>
+                    <p><strong>Action:</strong> ${data.analysis.recommended_action}</p>
+                </div>
+            `;
+        } else {
+            resultsDiv.innerHTML = `<div class="alert alert-danger">Error: ${data.error}</div>`;
+        }
+    } catch (error) {
+        resultsDiv.innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
+    }
+});
+
+// Generate Report
+document.getElementById('generateReport').addEventListener('click', async function() {
+    const period = document.getElementById('reportPeriod').value;
+    const resultsDiv = document.getElementById('reportResults');
+    
+    try {
+        resultsDiv.innerHTML = '<div class="spinner-border text-success" role="status"></div> Generating report...';
+        resultsDiv.style.display = 'block';
+        
+        const response = await fetch(`/api/ai/security_report?period=${period}`);
+        const data = await response.json();
+        
+        if (data.success) {
+            resultsDiv.innerHTML = `
+                <div class="alert alert-success">
+                    <h6>Security Report Generated</h6>
+                    <pre style="white-space: pre-wrap; font-size: 0.9em;">${data.report}</pre>
+                </div>
+            `;
+        } else {
+            resultsDiv.innerHTML = `<div class="alert alert-danger">Error: ${data.error}</div>`;
+        }
+    } catch (error) {
+        resultsDiv.innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
+    }
+});
+
+// Enhance Alert
+document.querySelectorAll('.enhance-btn').forEach(btn => {
+    btn.addEventListener('click', async function() {
+        const alertId = this.dataset.alertId;
+        
+        try {
+            this.innerHTML = '<div class="spinner-border spinner-border-sm" role="status"></div>';
+            
+            const response = await fetch(`/api/ai/enhance_alert/${alertId}`);
+            const data = await response.json();
+            
+            if (data.success) {
+                alert('Alert enhanced successfully!');
+                location.reload();
+            } else {
+                alert('Enhancement failed: ' + data.error);
+            }
+        } catch (error) {
+            alert('Error: ' + error.message);
+        }
+    });
+});
+
+function acknowledgeAlert(alertId) {
+    window.location.href = `/acknowledge_alert/${alertId}`;
+}
+</script>
+{% endblock %}

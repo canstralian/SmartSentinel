@@ -20,7 +20,7 @@ Preferred communication style: Simple, everyday language.
 ### Backend Architecture
 - **Framework**: Flask web framework with SQLAlchemy ORM
 - **Database**: SQLAlchemy with support for SQLite (default) and PostgreSQL
-- **Authentication**: Session-based authentication with role-based access control
+- **Authentication**: Replit Auth with OpenID Connect, with legacy session-based fallback
 - **Middleware**: ProxyFix for handling reverse proxy headers
 
 ### Data Storage
@@ -31,13 +31,14 @@ Preferred communication style: Simple, everyday language.
 ## Key Components
 
 ### Models
-- **User**: User authentication and role management (operations, it, executive)
+- **User**: User authentication and role management (operations, it, executive) - updated for Replit Auth compatibility
+- **OAuth**: OAuth token storage for Replit Auth sessions
 - **Camera**: IP camera management with status tracking
 - **Alert**: Security alert system with severity levels and acknowledgment
 - **Event**: Object detection and motion events with metadata
 
 ### Routes and Views
-- **Authentication**: Login/logout functionality with session management
+- **Authentication**: Replit Auth with OpenID Connect, legacy login fallback
 - **Dashboard**: Overview with statistics and real-time monitoring
 - **Camera Management**: Grid and list views for camera monitoring
 - **Alert Management**: Alert filtering, acknowledgment, and resolution
@@ -51,11 +52,22 @@ Preferred communication style: Simple, everyday language.
 
 ## Data Flow
 
-1. **User Authentication**: Session-based login with role determination
+1. **User Authentication**: Replit Auth with OpenID Connect, automatic user creation and role assignment
 2. **Camera Data**: Mock data generation for demonstration purposes
 3. **Alert Processing**: Real-time alert generation and management
 4. **Event Tracking**: Object detection events with confidence scoring
 5. **Analytics**: Data aggregation for reporting and insights
+
+## Recent Changes
+
+### 2025-07-16: Replit Auth Integration
+- Added Replit Auth with OpenID Connect support
+- Updated User model to support string IDs and OAuth claims
+- Added OAuth model for token storage
+- Implemented Flask-Dance for OAuth2 handling
+- Updated all routes to use Flask-Login decorators
+- Created fallback legacy login system
+- Added proper error handling for authentication failures
 
 ## External Dependencies
 
@@ -70,6 +82,9 @@ Preferred communication style: Simple, everyday language.
 - SQLAlchemy ORM
 - Werkzeug for security utilities
 - Flask-Login for user session management
+- Flask-Dance for OAuth2 integration
+- PyJWT for JSON Web Token handling
+- OAuthlib for OAuth2 support
 
 ## Deployment Strategy
 

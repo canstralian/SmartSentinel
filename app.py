@@ -32,6 +32,7 @@ with app.app_context():
     # Import models and routes
     import models
     import routes
+    import ai_routes
     
     # Create all tables
     db.create_all()

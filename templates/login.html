@@ -15,6 +15,20 @@
                             <p class="text-muted">Surveillance Management System</p>
                         </div>
                         
+                        <!-- Replit Auth Login (Primary) -->
+                        <div class="mb-4">
+                            <a href="{{ url_for('replit_auth.login') }}" class="btn btn-primary w-100 mb-3">
+                                <i data-feather="log-in" class="me-2"></i>Sign In with Replit
+                            </a>
+                        </div>
+                        
+                        <!-- Divider -->
+                        <div class="text-center mb-4">
+                            <hr class="my-3">
+                            <small class="text-muted bg-white px-3">or use legacy login</small>
+                        </div>
+                        
+                        <!-- Legacy Login (Fallback) -->
                         <form method="POST">
                             <div class="mb-3">
                                 <label for="username" class="form-label">Username</label>
@@ -36,8 +50,8 @@
                                 </div>
                             </div>
                             
-                            <button type="submit" class="btn btn-primary w-100 mb-3">
-                                <i data-feather="log-in" class="me-2"></i>Sign In
+                            <button type="submit" class="btn btn-outline-secondary w-100 mb-3">
+                                <i data-feather="unlock" class="me-2"></i>Legacy Sign In
                             </button>
                         </form>
                         

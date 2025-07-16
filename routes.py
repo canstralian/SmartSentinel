@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 import json
 from mock_data import get_mock_cameras, get_mock_alerts, get_mock_events, get_analytics_data
 from replit_auth import require_login, make_replit_blueprint
-from flask_login import current_user, login_required
+from flask_login import current_user, login_required, login_user
 
 # Register the Replit Auth blueprint
 app.register_blueprint(make_replit_blueprint(), url_prefix="/auth")
@@ -30,10 +30,9 @@ def login():
         
         user = User.query.filter_by(username=username).first()
         
-        if user and check_password_hash(user.password_hash, password):
-            session['user_id'] = user.id
-            session['username'] = user.username
-            session['role'] = user.role
+        if user and user.password_hash and check_password_hash(user.password_hash, password):
+            # Use Flask-Login for consistency
+            login_user(user)
             
             # Update last login
             user.last_login = datetime.utcnow()

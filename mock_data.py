@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 import random
+import json
 
 def get_mock_cameras():
     """Generate mock camera data for the surveillance system"""
@@ -62,24 +63,72 @@ def get_mock_cameras():
     return cameras
 
 def get_mock_alerts():
-    """Generate mock alert data"""
+    """Generate mock alert data with AI enhancement"""
     alert_types = ['motion', 'object', 'boundary', 'loitering']
     severities = ['low', 'medium', 'high', 'critical']
     statuses = ['active', 'acknowledged', 'resolved']
     
+    ai_enhanced_descriptions = {
+        'motion': [
+            'Unauthorized person detected in restricted area - potential security breach',
+            'Multiple individuals moving in formation - coordinated activity detected',
+            'Rapid movement pattern suggests fleeing behavior - investigate immediately'
+        ],
+        'object': [
+            'Unattended package detected - potential security risk, recommend EOD assessment',
+            'Tool/weapon-like object identified - enhanced threat level, notify security',
+            'Vehicle blocking emergency exit - immediate removal required'
+        ],
+        'boundary': [
+            'Perimeter breach detected with cutting tool signature - physical security compromise',
+            'Fence climbing activity with extended duration - persistent intrusion attempt',
+            'Multiple boundary violations in coordinated pattern - organized breach attempt'
+        ],
+        'loitering': [
+            'Extended presence in sensitive area - surveillance/reconnaissance behavior',
+            'Repetitive movement pattern suggests casing activity - potential pre-attack behavior',
+            'Group gathering in non-public area - unauthorized assembly detected'
+        ]
+    }
+    
     alerts = []
     for i in range(20):
+        alert_type = random.choice(alert_types)
+        is_ai_enhanced = random.choice([True, False, False])  # 33% chance of AI enhancement
+        
         alert = {
             'id': i + 1,
             'camera_id': random.randint(1, 6),
             'camera_name': f'Camera {random.randint(1, 6)}',
-            'alert_type': random.choice(alert_types),
+            'alert_type': alert_type,
             'severity': random.choice(severities),
             'status': random.choice(statuses),
-            'description': f'Alert {i + 1} - {random.choice(alert_types)} detected',
             'created_at': datetime.utcnow() - timedelta(hours=random.randint(0, 72)),
-            'acknowledged_by': 'admin' if random.choice([True, False]) else None
+            'acknowledged_by': 'admin' if random.choice([True, False]) else None,
+            'ai_enhanced': is_ai_enhanced,
+            'confidence': round(random.uniform(0.6, 0.99), 2) if is_ai_enhanced else None
         }
+        
+        if is_ai_enhanced:
+            alert['description'] = random.choice(ai_enhanced_descriptions[alert_type])
+            alert['threat_analysis'] = {
+                'risk_level': random.choice(['medium', 'high', 'critical']),
+                'objects_detected': random.choice([
+                    ['person', 'backpack'], 
+                    ['vehicle', 'license_plate'], 
+                    ['tool', 'cutting_implement'],
+                    ['multiple_persons', 'coordination_pattern']
+                ]),
+                'recommended_action': random.choice([
+                    'Immediate security response required',
+                    'Deploy additional surveillance units',
+                    'Notify law enforcement',
+                    'Initiate lockdown protocol'
+                ])
+            }
+        else:
+            alert['description'] = f'Alert {i + 1} - {alert_type} detected'
+        
         alerts.append(alert)
     
     # Sort by created_at descending
